@@ -1,0 +1,385 @@
+<!-- Main container -->
+<div class="min-h-screen lg:flex bg-stone-100 dark:bg-stone-950 text-stone-800 dark:text-stone-200 font-sans">
+
+  <!-- Sidebar -->
+  <aside class="fixed inset-y-0 left-0 w-64 bg-white/80 dark:bg-stone-900/80 p-6 flex-col justify-between border-r border-stone-200 dark:border-amber-500/10 transition-transform duration-300 ease-in-out z-30 lg:relative lg:translate-x-0 flex"
+         [class.translate-x-0]="isMenuOpen()"
+         [class.-translate-x-full]="!isMenuOpen()">
+    <div>
+      <div class="text-center mb-10">
+        <h2 class="text-2xl font-bold text-amber-600 dark:text-amber-400 font-serif">ERIDES SOUZA</h2>
+        <p class="text-sm text-stone-500 dark:text-stone-400">Painel Administrativo</p>
+      </div>
+      <nav class="space-y-2">
+        @for(item of [
+          { key: 'dashboard', label: 'Dashboard', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
+          { key: 'appointments', label: 'Agendamentos', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+          { key: 'services', label: 'Serviços', icon: 'M12 6V4m0 16v-2m0-10v-2m0 10v-2m-4 5h8M4 12H2m18 0h-2m-5-4v8m-4-4h8' },
+          { key: 'finances', label: 'Financeiro', icon: 'M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3' },
+          { key: 'clients', label: 'Clientes', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
+        ]; track item.key) {
+          <button (click)="selectSection(item.key)" 
+                  class="w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105"
+                  [class.bg-amber-500/10]="activeSection() === item.key"
+                  [class.dark:bg-amber-400/10]="activeSection() === item.key"
+                  [class.text-amber-600]="activeSection() === item.key"
+                  [class.dark:text-amber-300]="activeSection() === item.key"
+                  [class.text-stone-700]="activeSection() !== item.key"
+                  [class.dark:text-stone-300]="activeSection() !== item.key"
+                  [class.hover:bg-stone-200/50]="activeSection() !== item.key"
+                  [class.dark:hover:bg-stone-700/50]="activeSection() !== item.key">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="item.icon" /></svg>
+            <span>{{ item.label }}</span>
+          </button>
+        }
+      </nav>
+    </div>
+    <button (click)="logout()" class="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-stone-700 dark:text-stone-300 hover:bg-red-100 dark:hover:bg-red-800/50 transition-colors duration-200 transform hover:scale-105 active:scale-100">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+           <path stroke-linecap="round" stroke-linejoin="round" d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4m-3-4l3-3m0 0l-3-3m3 3H3" />
+        </svg>
+        <span>Sair</span>
+    </button>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-4 sm:p-8 overflow-y-auto">
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-8">
+       <button class="lg:hidden p-2 text-stone-500 dark:text-stone-400" (click)="toggleMenu()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>
+      </button>
+      <h1 class="text-3xl font-bold text-amber-600 dark:text-amber-400 capitalize">{{ activeSection() }}</h1>
+      <div class="flex items-center space-x-4">
+        <span class="text-stone-700 dark:text-stone-300 hidden sm:inline">Olá, {{ authService.currentUser()?.name }}!</span>
+        <app-theme-toggle />
+        <div class="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center font-bold text-stone-900">
+          E
+        </div>
+      </div>
+    </header>
+
+    @switch (activeSection()) {
+      @case ('dashboard') {
+        <div class="animate-fade-in-down">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white/70 dark:bg-stone-900/70 p-6 rounded-lg border border-stone-200 dark:border-amber-500/10"><h3 class="text-stone-500 dark:text-stone-400 text-sm">Faturamento de Hoje</h3><p class="text-3xl font-bold text-amber-600 dark:text-amber-300">{{ todayRevenue() | currency:'BRL' }}</p></div>
+            <div class="bg-white/70 dark:bg-stone-900/70 p-6 rounded-lg border border-stone-200 dark:border-amber-500/10"><h3 class="text-stone-500 dark:text-stone-400 text-sm">Agendamentos de Hoje</h3><p class="text-3xl font-bold">{{ todayBookings() }}</p></div>
+            <div class="bg-white/70 dark:bg-stone-900/70 p-6 rounded-lg border border-stone-200 dark:border-amber-500/10"><h3 class="text-stone-500 dark:text-stone-400 text-sm">Faturamento Mensal</h3><p class="text-3xl font-bold text-amber-600 dark:text-amber-300">{{ monthlyRevenue() | currency:'BRL' }}</p></div>
+            <div class="bg-white/70 dark:bg-stone-900/70 p-6 rounded-lg border border-stone-200 dark:border-amber-500/10"><h3 class="text-stone-500 dark:text-stone-400 text-sm">Lucro Mensal</h3><p class="text-3xl font-bold text-green-600 dark:text-green-400">{{ monthlyProfit() | currency:'BRL' }}</p></div>
+          </div>
+          <div class="mt-8 bg-white/70 dark:bg-stone-900/70 p-6 rounded-lg border border-stone-200 dark:border-amber-500/10">
+            <h2 class="text-xl font-semibold text-amber-600 dark:text-amber-300 mb-4">Aniversariantes do Dia 🎂</h2>
+            @if (clientsWithBirthdayToday().length > 0) {
+              <div class="space-y-3">
+                @for (client of clientsWithBirthdayToday(); track client.id) {
+                  <div class="flex justify-between items-center bg-stone-100 dark:bg-stone-800/60 p-3 rounded-md">
+                    <p class="font-semibold">{{ client.name }}</p>
+                    <button (click)="sendBirthdayGreeting(client)" class="px-3 py-1 text-xs rounded-md bg-amber-200 dark:bg-amber-700/50 hover:bg-amber-500 hover:text-stone-900 font-bold transition-all transform hover:scale-105 active:scale-95">Enviar Parabéns</button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-stone-500 dark:text-stone-400">Nenhum cliente faz aniversário hoje.</p>
+            }
+          </div>
+        </div>
+      }
+      @case ('appointments') {
+        <div class="bg-white/70 dark:bg-stone-900/70 p-6 rounded-lg border border-stone-200 dark:border-amber-500/10 animate-fade-in-down">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-amber-600 dark:text-amber-300">Todos Agendamentos</h2>
+            <button (click)="exportAppointments()" class="flex items-center space-x-2 px-4 py-2 text-sm rounded-md bg-stone-200 dark:bg-stone-700 hover:bg-amber-500 hover:text-stone-900 font-bold transition-all transform hover:scale-105 active:scale-95">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              <span>Exportar CSV</span>
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="border-b border-stone-200 dark:border-stone-700 text-sm text-stone-500 dark:text-stone-400">
+                  <th class="p-3">Cliente</th><th class="p-3 hidden md:table-cell">Serviço</th><th class="p-3">Data & Hora</th><th class="p-3">Status</th><th class="p-3 hidden sm:table-cell">Preço</th><th class="p-3">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+              @for(app of appointmentsWithDetails(); track app.id) {
+                <tr class="border-b border-stone-100 dark:border-stone-800 hover:bg-stone-100/50 dark:hover:bg-stone-800/50">
+                  <td class="p-3 font-semibold">{{app.userName}}</td>
+                  <td class="p-3 hidden md:table-cell">{{app.serviceName}}</td>
+                  <td class="p-3">{{app.date | date:'dd/MM/yy'}} - {{app.time}}</td>
+                  <td class="p-3"><span class="px-2 py-1 text-xs rounded-full" [class.bg-green-500/20]="app.status === 'confirmed'" [class.text-green-400]="app.status === 'confirmed'" [class.bg-yellow-500/20]="app.status === 'pending'" [class.text-yellow-400]="app.status === 'pending'" [class.bg-red-500/20]="app.status === 'cancelled'" [class.text-red-400]="app.status === 'cancelled'" >{{app.status}}</span></td>
+                  <td class="p-3 font-mono hidden sm:table-cell">{{app.price | currency:'BRL'}}</td>
+                  <td class="p-3"><button (click)="openAppointmentModal(app)" class="px-3 py-1 text-xs rounded-md bg-stone-200 dark:bg-stone-700 hover:bg-amber-500 hover:text-stone-900 font-bold transition-all transform hover:scale-105 active:scale-95">Editar</button></td>
+                </tr>
+              }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+      @case ('services') {
+        <div class="animate-fade-in-down">
+          <div class="flex justify-between items-center mb-6">
+              <h2 class="text-xl font-semibold text-amber-600 dark:text-amber-300">Gerenciar Serviços</h2>
+              <button (click)="openNewServiceModal()" class="flex items-center space-x-2 px-4 py-2 text-sm rounded-md bg-amber-500 text-stone-900 font-bold transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-amber-500/20">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                  <span>Novo Serviço</span>
+              </button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            @for (service of services(); track service.id) {
+              <button (click)="openServiceModal(service)" class="bg-white/70 dark:bg-stone-900/70 border border-stone-200 dark:border-amber-500/20 rounded-lg p-6 text-left flex flex-col transition-all duration-200 hover:bg-stone-100/70 dark:hover:bg-stone-800/70 hover:shadow-lg hover:shadow-stone-400/30 dark:hover:shadow-black/30 transform hover:-translate-y-1 active:translate-y-0">
+                <div class="flex-1">
+                  <span class="text-4xl mb-4 block">{{service.emoji}}</span>
+                  <h3 class="text-xl font-semibold text-amber-600 dark:text-amber-300">{{service.name}}</h3>
+                  <p class="text-stone-600 dark:text-stone-400 mt-2 text-sm">{{service.description}}</p>
+                </div>
+                <div class="mt-4 flex justify-between items-center">
+                  <span class="text-lg font-bold text-stone-900 dark:text-white">{{service.price | currency:'BRL'}}</span>
+                  <span class="text-sm text-stone-500 dark:text-stone-400">{{service.duration}} min</span>
+                </div>
+              </button>
+            }
+          </div>
+        </div>
+      }
+      @case ('finances') {
+        <div class="animate-fade-in-down">
+          <div class="flex flex-wrap gap-4 justify-between items-center mb-6">
+              <h2 class="text-xl font-semibold text-amber-600 dark:text-amber-300">Visão Financeira Mensal</h2>
+              <div class="flex gap-4">
+                 <button (click)="openAddRevenueModal()" class="flex items-center space-x-2 px-4 py-2 text-sm rounded-md bg-green-200 dark:bg-green-800/60 hover:bg-green-300 dark:hover:bg-green-700/60 text-green-800 dark:text-green-200 font-bold transition-all transform hover:scale-105 active:scale-95">
+                    <span>Adicionar Receita</span>
+                  </button>
+                  <button (click)="openAddExpenseModal()" class="flex items-center space-x-2 px-4 py-2 text-sm rounded-md bg-red-200 dark:bg-red-800/60 hover:bg-red-300 dark:hover:bg-red-700/60 text-red-800 dark:text-red-200 font-bold transition-all transform hover:scale-105 active:scale-95">
+                    <span>Adicionar Despesa</span>
+                  </button>
+              </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div class="bg-white/70 dark:bg-stone-900/70 p-6 rounded-lg border border-stone-200 dark:border-amber-500/10"><h3 class="text-stone-500 dark:text-stone-400 text-sm">Faturamento Total</h3><p class="text-3xl font-bold text-amber-600 dark:text-amber-300">{{ monthlyRevenue() | currency:'BRL' }}</p></div>
+              <div class="bg-white/70 dark:bg-stone-900/70 p-6 rounded-lg border border-stone-200 dark:border-amber-500/10"><h3 class="text-stone-500 dark:text-stone-400 text-sm">Despesas Totais</h3><p class="text-3xl font-bold text-red-600 dark:text-red-400">{{ monthlyExpenses() | currency:'BRL' }}</p></div>
+              <div class="bg-white/70 dark:bg-stone-900/70 p-6 rounded-lg border border-stone-200 dark:border-amber-500/10"><h3 class="text-stone-500 dark:text-stone-400 text-sm">Lucro Líquido</h3><p class="text-3xl font-bold text-green-600 dark:text-green-400">{{ monthlyProfit() | currency:'BRL' }}</p></div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <h3 class="text-lg font-semibold text-green-600 dark:text-green-400 mb-4">Receitas do Mês</h3>
+              <div class="bg-white/70 dark:bg-stone-900/70 p-4 rounded-lg border border-stone-200 dark:border-amber-500/10">
+                @if(currentMonthRevenues().length > 0) {
+                  <ul class="divide-y divide-stone-200 dark:divide-stone-800">
+                    @for(rev of currentMonthRevenues(); track rev.id) {
+                      <li class="py-2 flex justify-between items-center">
+                        <div>
+                          <p class="font-semibold">{{rev.item}}</p>
+                          <p class="text-xs text-stone-500 dark:text-stone-400">{{rev.date | date:'dd/MM'}} - {{rev.category}}</p>
+                        </div>
+                        <p class="font-mono font-semibold">{{rev.amount | currency:'BRL'}}</p>
+                      </li>
+                    }
+                  </ul>
+                } @else {
+                  <p class="text-center text-stone-500 dark:text-stone-400 py-4">Nenhuma receita extra registrada este mês.</p>
+                }
+              </div>
+            </div>
+             <div>
+              <h3 class="text-lg font-semibold text-red-600 dark:text-red-400 mb-4">Despesas do Mês</h3>
+              <div class="bg-white/70 dark:bg-stone-900/70 p-4 rounded-lg border border-stone-200 dark:border-amber-500/10">
+                @if(currentMonthExpenses().length > 0) {
+                  <ul class="divide-y divide-stone-200 dark:divide-stone-800">
+                    @for(exp of currentMonthExpenses(); track exp.id) {
+                      <li class="py-2 flex justify-between items-center">
+                        <div>
+                          <p class="font-semibold">{{exp.item}}</p>
+                          <p class="text-xs text-stone-500 dark:text-stone-400">{{exp.date | date:'dd/MM'}} - {{exp.category}}</p>
+                        </div>
+                        <p class="font-mono font-semibold text-red-500 dark:text-red-400">-{{exp.amount | currency:'BRL'}}</p>
+                      </li>
+                    }
+                  </ul>
+                } @else {
+                  <p class="text-center text-stone-500 dark:text-stone-400 py-4">Nenhuma despesa registrada este mês.</p>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+      @case ('clients') {
+        <div class="bg-white/70 dark:bg-stone-900/70 p-6 rounded-lg border border-stone-200 dark:border-amber-500/10 animate-fade-in-down">
+           <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-amber-600 dark:text-amber-300">Todos os Clientes</h2>
+            <button (click)="exportClients()" class="flex items-center space-x-2 px-4 py-2 text-sm rounded-md bg-stone-200 dark:bg-stone-700 hover:bg-amber-500 hover:text-stone-900 font-bold transition-all transform hover:scale-105 active:scale-95">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              <span>Exportar CSV</span>
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="border-b border-stone-200 dark:border-stone-700 text-sm text-stone-500 dark:text-stone-400">
+                  <th class="p-3">Nome</th><th class="p-3 hidden md:table-cell">Email</th><th class="p-3">Aniversário</th><th class="p-3">Cliente Fiel</th><th class="p-3">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for(client of clients(); track client.id) {
+                <tr class="border-b border-stone-100 dark:border-stone-800 hover:bg-stone-100/50 dark:hover:bg-stone-800/50">
+                  <td class="p-3 font-semibold">{{client.name}}</td>
+                  <td class="p-3 hidden md:table-cell">{{client.email}}</td>
+                  <td class="p-3">{{client.birthday | date:'dd/MM/yyyy'}}</td>
+                  <td class="p-3">
+                    @if(client.isLoyal) { <span class="text-amber-500 text-xl">★</span> } 
+                    @else { <span class="text-stone-400 dark:text-stone-600">☆</span> }
+                  </td>
+                  <td class="p-3"><button (click)="openClientModal(client)" class="px-3 py-1 text-xs rounded-md bg-stone-200 dark:bg-stone-700 hover:bg-amber-500 hover:text-stone-900 font-bold transition-all transform hover:scale-105 active:scale-95">Editar</button></td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    }
+  </main>
+</div>
+
+<!-- Modals -->
+@if(selectedServiceForModal(); as service) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4" (click)="closeServiceModal()">
+    <div class="bg-stone-100 dark:bg-stone-900 rounded-lg shadow-2xl w-full max-w-lg animate-fade-in-scale-up border border-amber-500/20" (click)="$event.stopPropagation()">
+      @if (isEditMode() && editingServiceData(); as editingService) {
+        <!-- Edit/Create View -->
+        <div class="p-6">
+          <h2 class="text-2xl font-bold text-amber-600 dark:text-amber-400 mb-4">{{ editingService.id ? 'Editar Serviço' : 'Criar Novo Serviço' }}</h2>
+          <form (ngSubmit)="saveService()" class="space-y-4">
+            <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Nome</label><input type="text" [value]="editingService.name" (input)="handleFormChange($event, 'name')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></div>
+            <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Descrição</label><textarea rows="3" [value]="editingService.description" (input)="handleFormChange($event, 'description')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></textarea></div>
+            <div class="grid grid-cols-2 gap-4">
+              <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Preço (R$)</label><input type="number" [value]="editingService.price" (input)="handleFormChange($event, 'price')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></div>
+              <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Duração (min)</label><input type="number" [value]="editingService.duration" (input)="handleFormChange($event, 'duration')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></div>
+            </div>
+             <div class="grid grid-cols-2 gap-4">
+                <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Categoria</label><input type="text" [value]="editingService.category" (input)="handleFormChange($event, 'category')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></div>
+                <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Emoji</label><input type="text" [value]="editingService.emoji" (input)="handleFormChange($event, 'emoji')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></div>
+            </div>
+          </form>
+        </div>
+        <div class="bg-stone-200 dark:bg-stone-800/50 px-6 py-3 flex justify-end gap-3">
+          <button (click)="cancelEdit()" class="px-4 py-2 rounded-md text-sm font-medium bg-stone-300 dark:bg-stone-700 hover:bg-stone-400 dark:hover:bg-stone-600 transition-colors">Cancelar</button>
+          <button (click)="saveService()" [disabled]="isSaving()" class="px-4 py-2 rounded-md text-sm font-medium text-stone-900 bg-amber-500 hover:bg-amber-400 disabled:bg-stone-400 disabled:cursor-wait transition-colors">{{ isSaving() ? 'Salvando...' : 'Salvar' }}</button>
+        </div>
+      } @else {
+        <!-- Details View -->
+        <div class="p-6">
+          <div class="text-center mb-4"><span class="text-6xl">{{service.emoji}}</span></div>
+          <h2 class="text-3xl font-bold text-center text-amber-600 dark:text-amber-400">{{service.name}}</h2>
+          <p class="text-stone-600 dark:text-stone-400 mt-2 text-center">{{service.description}}</p>
+          <div class="mt-6 p-4 bg-stone-200/50 dark:bg-stone-800/50 rounded-lg flex justify-around text-center">
+            <div><p class="text-sm text-stone-500 dark:text-stone-400">Preço</p><p class="font-bold text-lg">{{service.price | currency:'BRL'}}</p></div>
+            <div><p class="text-sm text-stone-500 dark:text-stone-400">Duração</p><p class="font-bold text-lg">{{service.duration}} min</p></div>
+            <div><p class="text-sm text-stone-500 dark:text-stone-400">Categoria</p><p class="font-bold text-lg">{{service.category}}</p></div>
+          </div>
+        </div>
+        <div class="bg-stone-200 dark:bg-stone-800/50 px-6 py-3 flex justify-between">
+            <button (click)="deleteService(service)" class="px-4 py-2 rounded-md text-sm font-medium text-red-700 dark:text-red-300 bg-red-200/50 dark:bg-red-900/40 hover:bg-red-200 dark:hover:bg-red-900/70 transition-colors">Excluir</button>
+            <div class="flex gap-3">
+                <button (click)="closeServiceModal()" class="px-4 py-2 rounded-md text-sm font-medium bg-stone-300 dark:bg-stone-700 hover:bg-stone-400 dark:hover:bg-stone-600 transition-colors">Fechar</button>
+                <button (click)="switchToEditMode()" class="px-4 py-2 rounded-md text-sm font-medium text-stone-900 bg-amber-500 hover:bg-amber-400 transition-colors">Editar</button>
+            </div>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+@if(selectedAppointmentForModal(); as app) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4" (click)="closeAppointmentModal()">
+     <div class="bg-stone-100 dark:bg-stone-900 rounded-lg shadow-2xl w-full max-w-lg animate-fade-in-scale-up border border-amber-500/20" (click)="$event.stopPropagation()">
+       @if(editingAppointmentData(); as editingApp) {
+        <div class="p-6">
+          <h2 class="text-2xl font-bold text-amber-600 dark:text-amber-400 mb-4">Editar Agendamento</h2>
+          <div class="space-y-4">
+            <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Cliente</label><input type="text" [value]="editingApp.userName" readonly class="mt-1 w-full bg-stone-200/50 dark:bg-stone-800/50 border-stone-300 dark:border-stone-700 rounded-md p-2 cursor-not-allowed"></div>
+            <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Serviço</label><input type="text" [value]="editingApp.serviceName" readonly class="mt-1 w-full bg-stone-200/50 dark:bg-stone-800/50 border-stone-300 dark:border-stone-700 rounded-md p-2 cursor-not-allowed"></div>
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Data</label><input type="date" [value]="editingApp.date" (input)="handleAppointmentFormChange($event, 'date')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></div>
+                <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Hora</label><input type="time" [value]="editingApp.time" (input)="handleAppointmentFormChange($event, 'time')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></div>
+            </div>
+            <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Status</label><select [value]="editingApp.status" (change)="handleAppointmentFormChange($event, 'status')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"><option value="confirmed">Confirmado</option><option value="pending">Pendente</option><option value="cancelled">Cancelado</option></select></div>
+          </div>
+        </div>
+       }
+       <div class="bg-stone-200 dark:bg-stone-800/50 px-6 py-3 flex justify-end gap-3">
+         <button (click)="closeAppointmentModal()" class="px-4 py-2 rounded-md text-sm font-medium bg-stone-300 dark:bg-stone-700 hover:bg-stone-400 dark:hover:bg-stone-600 transition-colors">Cancelar</button>
+         <button (click)="saveAppointmentChanges()" [disabled]="isSaving()" class="px-4 py-2 rounded-md text-sm font-medium text-stone-900 bg-amber-500 hover:bg-amber-400 disabled:bg-stone-400 disabled:cursor-wait transition-colors">{{ isSaving() ? 'Salvando...' : 'Salvar' }}</button>
+       </div>
+    </div>
+  </div>
+}
+
+@if(selectedClientForModal(); as client) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4" (click)="closeClientModal()">
+     <div class="bg-stone-100 dark:bg-stone-900 rounded-lg shadow-2xl w-full max-w-lg animate-fade-in-scale-up border border-amber-500/20" (click)="$event.stopPropagation()">
+       @if(editingClientData(); as editingClient) {
+        <div class="p-6">
+          <h2 class="text-2xl font-bold text-amber-600 dark:text-amber-400 mb-4">Editar Cliente</h2>
+          <div class="space-y-4">
+            <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Nome</label><input type="text" [value]="editingClient.name" (input)="handleClientFormChange($event, 'name')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></div>
+            <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Email</label><input type="email" [value]="editingClient.email" (input)="handleClientFormChange($event, 'email')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></div>
+            <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Aniversário</label><input type="date" [value]="editingClient.birthday" (input)="handleClientFormChange($event, 'birthday')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></div>
+            <div class="flex items-center"><input type="checkbox" id="isLoyal" [checked]="editingClient.isLoyal" (change)="handleClientFormChange($event, 'isLoyal')" class="h-4 w-4 rounded border-stone-300 text-amber-600 focus:ring-amber-500"><label for="isLoyal" class="ml-2 block text-sm text-stone-900 dark:text-stone-300">Cliente Fiel</label></div>
+          </div>
+        </div>
+       }
+       <div class="bg-stone-200 dark:bg-stone-800/50 px-6 py-3 flex justify-end gap-3">
+         <button (click)="closeClientModal()" class="px-4 py-2 rounded-md text-sm font-medium bg-stone-300 dark:bg-stone-700 hover:bg-stone-400 dark:hover:bg-stone-600 transition-colors">Cancelar</button>
+         <button (click)="saveClientChanges()" [disabled]="isSaving()" class="px-4 py-2 rounded-md text-sm font-medium text-stone-900 bg-amber-500 hover:bg-amber-400 disabled:bg-stone-400 disabled:cursor-wait transition-colors">{{ isSaving() ? 'Salvando...' : 'Salvar' }}</button>
+       </div>
+    </div>
+  </div>
+}
+
+@if(isAddExpenseModalOpen()) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4" (click)="closeAddExpenseModal()">
+     <div class="bg-stone-100 dark:bg-stone-900 rounded-lg shadow-2xl w-full max-w-lg animate-fade-in-scale-up border border-amber-500/20" (click)="$event.stopPropagation()">
+       <div class="p-6">
+         <h2 class="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">Adicionar Despesa</h2>
+         <div class="space-y-4">
+            <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Item/Descrição</label><input type="text" [value]="newExpenseData().item" (input)="handleFinanceFormChange($event, 'expense', 'item')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></div>
+            <div class="grid grid-cols-2 gap-4">
+              <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Valor (R$)</label><input type="number" [value]="newExpenseData().amount" (input)="handleFinanceFormChange($event, 'expense', 'amount')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></div>
+              <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Data</label><input type="date" [value]="newExpenseData().date" (input)="handleFinanceFormChange($event, 'expense', 'date')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></div>
+            </div>
+            <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Categoria</label><select [value]="newExpenseData().category" (change)="handleFinanceFormChange($event, 'expense', 'category')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"><option value="supplies">Material</option><option value="rent">Aluguel</option><option value="utilities">Contas</option><option value="marketing">Marketing</option><option value="other">Outro</option></select></div>
+         </div>
+       </div>
+       <div class="bg-stone-200 dark:bg-stone-800/50 px-6 py-3 flex justify-end gap-3">
+         <button (click)="closeAddExpenseModal()" class="px-4 py-2 rounded-md text-sm font-medium bg-stone-300 dark:bg-stone-700 hover:bg-stone-400 dark:hover:bg-stone-600 transition-colors">Cancelar</button>
+         <button (click)="saveNewExpense()" [disabled]="isSaving()" class="px-4 py-2 rounded-md text-sm font-medium text-stone-900 bg-amber-500 hover:bg-amber-400 disabled:bg-stone-400 disabled:cursor-wait transition-colors">{{ isSaving() ? 'Adicionando...' : 'Adicionar' }}</button>
+       </div>
+    </div>
+  </div>
+}
+
+@if(isAddRevenueModalOpen()) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4" (click)="closeAddRevenueModal()">
+     <div class="bg-stone-100 dark:bg-stone-900 rounded-lg shadow-2xl w-full max-w-lg animate-fade-in-scale-up border border-amber-500/20" (click)="$event.stopPropagation()">
+       <div class="p-6">
+         <h2 class="text-2xl font-bold text-green-600 dark:text-green-400 mb-4">Adicionar Receita</h2>
+         <div class="space-y-4">
+            <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Item/Descrição</label><input type="text" [value]="newRevenueData().item" (input)="handleFinanceFormChange($event, 'revenue', 'item')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></div>
+            <div class="grid grid-cols-2 gap-4">
+              <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Valor (R$)</label><input type="number" [value]="newRevenueData().amount" (input)="handleFinanceFormChange($event, 'revenue', 'amount')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></div>
+              <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Data</label><input type="date" [value]="newRevenueData().date" (input)="handleFinanceFormChange($event, 'revenue', 'date')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"></div>
+            </div>
+            <div><label class="block text-sm font-medium text-stone-500 dark:text-stone-400">Categoria</label><select [value]="newRevenueData().category" (change)="handleFinanceFormChange($event, 'revenue', 'category')" class="mt-1 w-full bg-stone-200 dark:bg-stone-800 border-stone-300 dark:border-stone-700 rounded-md p-2 focus:ring-amber-500 focus:border-amber-500"><option value="product_sale">Venda de Produto</option><option value="course">Curso</option><option value="other">Outro</option></select></div>
+         </div>
+       </div>
+       <div class="bg-stone-200 dark:bg-stone-800/50 px-6 py-3 flex justify-end gap-3">
+         <button (click)="closeAddRevenueModal()" class="px-4 py-2 rounded-md text-sm font-medium bg-stone-300 dark:bg-stone-700 hover:bg-stone-400 dark:hover:bg-stone-600 transition-colors">Cancelar</button>
+         <button (click)="saveNewRevenue()" [disabled]="isSaving()" class="px-4 py-2 rounded-md text-sm font-medium text-stone-900 bg-amber-500 hover:bg-amber-400 disabled:bg-stone-400 disabled:cursor-wait transition-colors">{{ isSaving() ? 'Adicionando...' : 'Adicionar' }}</button>
+       </div>
+    </div>
+  </div>
+}

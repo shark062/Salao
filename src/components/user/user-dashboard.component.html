@@ -1,0 +1,109 @@
+<!-- Main container -->
+<div class="min-h-screen lg:flex bg-stone-100 dark:bg-stone-950 text-stone-800 dark:text-stone-200 font-sans">
+  <!-- Sidebar -->
+  <aside class="fixed inset-y-0 left-0 w-64 bg-white/80 dark:bg-stone-900/80 p-6 flex-col justify-between border-r border-stone-200 dark:border-amber-500/10 transition-transform duration-300 ease-in-out z-30 lg:relative lg:translate-x-0 flex"
+         [class.translate-x-0]="isMenuOpen()"
+         [class.-translate-x-full]="!isMenuOpen()">
+    <div>
+      <div class="text-center mb-10">
+        <h2 class="text-2xl font-bold text-amber-600 dark:text-amber-400 font-serif">ERIDES SOUZA</h2>
+        <p class="text-sm text-stone-500 dark:text-stone-400">Portal do Cliente</p>
+      </div>
+      <nav class="space-y-2">
+        @for(item of [
+          { key: 'dashboard', label: 'Início', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+          { key: 'new-appointment', label: 'Agendar', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+          { key: 'history', label: 'Histórico', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+          { key: 'profile', label: 'Meu Perfil', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
+        ]; track item.key) {
+          <button (click)="selectSection(item.key)" 
+                  class="w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105"
+                  [class.bg-amber-500/10]="activeSection() === item.key"
+                  [class.dark:bg-amber-400/10]="activeSection() === item.key"
+                  [class.text-amber-600]="activeSection() === item.key"
+                  [class.dark:text-amber-300]="activeSection() === item.key"
+                  [class.text-stone-700]="activeSection() !== item.key"
+                  [class.dark:text-stone-300]="activeSection() !== item.key"
+                  [class.hover:bg-stone-200/50]="activeSection() !== item.key"
+                  [class.dark:hover:bg-stone-700/50]="activeSection() !== item.key">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="item.icon" /></svg>
+            <span>{{ item.label }}</span>
+          </button>
+        }
+      </nav>
+    </div>
+    <button (click)="logout()" class="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-stone-700 dark:text-stone-300 hover:bg-red-100 dark:hover:bg-red-800/50 transition-colors duration-200 transform hover:scale-105 active:scale-100">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4m-3-4l3-3m0 0l-3-3m3 3H3" /></svg>
+        <span>Sair</span>
+    </button>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-4 sm:p-8 overflow-y-auto">
+    <header class="flex justify-between items-center mb-8">
+      <button class="lg:hidden p-2 text-stone-500 dark:text-stone-400" (click)="toggleMenu()"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg></button>
+      <h1 class="text-3xl font-bold text-amber-600 dark:text-amber-400 capitalize">{{ activeSection() === 'dashboard' ? 'Início' : activeSection() === 'new-appointment' ? 'Novo Agendamento' : activeSection() === 'history' ? 'Histórico' : 'Meu Perfil' }}</h1>
+      <div class="flex items-center space-x-4">
+        <span class="text-stone-700 dark:text-stone-300 hidden sm:inline">Olá, {{ currentUser()?.name?.split(' ')[0] }}!</span>
+        <app-theme-toggle />
+        <img [src]="currentUser()?.photoUrl || 'https://api.dicebear.com/8.x/initials/svg?seed=' + currentUser()?.name" alt="Foto de Perfil" class="w-10 h-10 rounded-full object-cover border-2 border-amber-500/50">
+      </div>
+    </header>
+
+    @switch (activeSection()) {
+      @case ('dashboard') {
+        <div class="animate-fade-in-down">
+          <h1 class="text-2xl md:text-3xl font-bold text-stone-900 dark:text-stone-100">Bem-vinda de volta, {{ currentUser()?.name }}!</h1>
+          <p class="text-stone-600 dark:text-stone-400 mt-2">Seu espaço de beleza e bem-estar.</p>
+          <div class="mt-8">
+            <h2 class="text-2xl font-semibold text-amber-600 dark:text-amber-300">Próximos Agendamentos</h2>
+            @if (upcomingAppointments().length > 0) {
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+                @for (app of upcomingAppointments(); track app.id) {
+                  <div class="bg-white/70 dark:bg-stone-900/70 p-6 rounded-lg border-l-4 border-amber-400 shadow-lg shadow-stone-400/20 dark:shadow-black/20"><div class="flex items-center"><span class="text-3xl mr-4">{{ app.emoji }}</span><div><h3 class="text-xl font-bold text-stone-800 dark:text-stone-100">{{ app.serviceName }}</h3><p class="text-stone-600 dark:text-stone-400">{{ app.date | date:'dd/MM/yyyy' }} às {{ app.time }}</p></div></div></div>
+                }
+              </div>
+            } @else {
+              <div class="mt-4 bg-white/70 dark:bg-stone-900/70 p-8 rounded-lg shadow-lg text-center border border-stone-200 dark:border-amber-500/10"><p class="text-stone-500 dark:text-stone-400">Você não tem nenhum agendamento futuro.</p><button (click)="selectSection('new-appointment')" class="mt-4 bg-amber-500 text-stone-900 font-bold py-2 px-6 rounded-lg hover:bg-amber-400 transition-all transform hover:scale-105 active:scale-95">Agendar um serviço</button></div>
+            }
+          </div>
+        </div>
+      }
+      @case ('new-appointment') {
+        <div class="animate-fade-in-down max-w-4xl mx-auto"><div class="bg-white/70 dark:bg-stone-900/70 p-8 rounded-lg border border-stone-200 dark:border-amber-500/10 shadow-lg"><form (ngSubmit)="bookAppointment()" class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div><label class="block text-sm font-medium text-amber-600/80 dark:text-amber-400/80">Serviço</label><select name="service" [(ngModel)]="selectedServiceId" required class="mt-1 w-full bg-stone-100 dark:bg-stone-800/60 border border-stone-300 dark:border-stone-700 rounded-lg px-3 py-2 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500"><option [ngValue]="null" disabled>Selecione</option>@for(s of services();track s.id){<option [ngValue]="s.id">{{s.name}} - {{s.price|currency:'BRL'}}</option>}</select></div>
+            <div><label class="block text-sm font-medium text-amber-600/80 dark:text-amber-400/80">Data</label><input type="date" name="date" [(ngModel)]="appointmentDate" required class="mt-1 w-full bg-stone-100 dark:bg-stone-800/60 border border-stone-300 dark:border-stone-700 rounded-lg px-3 py-2 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500"></div>
+            <div><label class="block text-sm font-medium text-amber-600/80 dark:text-amber-400/80">Hora</label><input type="time" name="time" [(ngModel)]="appointmentTime" required class="mt-1 w-full bg-stone-100 dark:bg-stone-800/60 border border-stone-300 dark:border-stone-700 rounded-lg px-3 py-2 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500"></div>
+          </div>
+          <div class="pt-6 border-t border-stone-200 dark:border-stone-700"><h2 class="text-xl font-semibold text-amber-600 dark:text-amber-300">Questionário</h2><p class="text-sm text-stone-500 dark:text-stone-400">Responda para garantirmos o melhor atendimento.</p>
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              @for(q of yesNoQuestions; track q.key) {<div><label class="font-medium text-stone-800 dark:text-stone-200">{{q.label}}</label><div class="flex items-center space-x-2 mt-2">@for(opt of ['sim','nao'];track opt){<label class="flex-1 cursor-pointer p-3 text-center border rounded-md transition-all duration-200 transform hover:scale-105 text-sm" [class.bg-amber-500]="questionnaire()[q.key]===opt" [class.text-stone-900]="questionnaire()[q.key]===opt" [class.border-amber-500]="questionnaire()[q.key]===opt" [class.font-bold]="questionnaire()[q.key]===opt" [class.hover:bg-stone-100]="questionnaire()[q.key]!==opt" [class.dark:hover:bg-stone-800]="questionnaire()[q.key]!==opt" [class.border-stone-300]="questionnaire()[q.key]!==opt" [class.dark:border-stone-600]="questionnaire()[q.key]!==opt"><input type="radio" [name]="q.key" [value]="opt" class="sr-only" (change)="updateQuestionnaireField(q.key, opt)"><span>{{opt|titlecase}}</span></label>}</div></div>}
+              <div class="md:col-span-2"><label class="font-medium text-stone-800 dark:text-stone-200">Como está sua lâmina ungueal?</label><div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">@for(o of laminaUnguealOptions;track o){<label class="flex items-center justify-center cursor-pointer p-3 border rounded-md transition-all duration-200 transform hover:scale-105 text-sm" [class.bg-amber-500/10]="isLaminaUnguealSelected(o)" [class.dark:bg-amber-400/10]="isLaminaUnguealSelected(o)" [class.border-amber-500]="isLaminaUnguealSelected(o)" [class.dark:border-amber-400]="isLaminaUnguealSelected(o)" [class.text-amber-600]="isLaminaUnguealSelected(o)" [class.dark:text-amber-300]="isLaminaUnguealSelected(o)" [class.font-semibold]="isLaminaUnguealSelected(o)" [class.hover:bg-stone-100]="!isLaminaUnguealSelected(o)" [class.dark:hover:bg-stone-800]="!isLaminaUnguealSelected(o)" [class.border-stone-300]="!isLaminaUnguealSelected(o)" [class.dark:border-stone-600]="!isLaminaUnguealSelected(o)"><input type="checkbox" [value]="o" [checked]="isLaminaUnguealSelected(o)" (change)="onLaminaUnguealChange($event)" class="sr-only"><span class="capitalize">{{o}}</span></label>}</div></div>
+              <div class="md:col-span-2"><label for="outros" class="font-medium text-stone-800 dark:text-stone-200">Algo mais que devamos saber?</label><textarea id="outros" rows="3" [value]="questionnaire().outros" (input)="onOutrosInputChange($event)" class="mt-2 w-full bg-stone-100 dark:bg-stone-800/60 border border-stone-300 dark:border-stone-700 rounded-lg px-3 py-2 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea></div>
+            </div>
+          </div>
+          <div class="flex justify-end pt-4"><button type="submit" [disabled]="!selectedServiceId() || !appointmentDate() || !appointmentTime() || isSaving()" class="bg-amber-500 text-stone-900 font-bold py-2 px-6 rounded-lg hover:bg-amber-400 transition-all transform hover:scale-105 active:scale-95 disabled:bg-stone-300 dark:disabled:bg-stone-600 disabled:cursor-wait disabled:opacity-50">{{ isSaving() ? 'Agendando...' : 'Confirmar Agendamento' }}</button></div>
+        </form></div></div>
+      }
+      @case ('history') {
+        <div class="animate-fade-in-down"><div class="bg-white/70 dark:bg-stone-900/70 rounded-lg border border-stone-200 dark:border-amber-500/10 shadow-lg">@if(userAppointments().length>0){<ul class="divide-y divide-stone-200 dark:divide-stone-800">@for(app of userAppointments();track app.id){<li class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 gap-3"><div class="flex items-center"><span class="text-3xl mr-4">{{app.emoji}}</span><div><p class="text-lg font-semibold text-stone-800 dark:text-stone-100">{{app.serviceName}}</p><p class="text-sm text-stone-500 dark:text-stone-400">{{app.date|date:'dd/MM/yyyy'}} às {{app.time}}</p></div></div><span class="px-3 py-1 text-sm font-semibold rounded-full" [class.bg-green-500/20]="app.status==='confirmed'" [class.text-green-400]="app.status==='confirmed'" [class.bg-yellow-500/20]="app.status==='pending'" [class.text-yellow-400]="app.status==='pending'" [class.bg-red-500/20]="app.status==='cancelled'" [class.text-red-400]="app.status==='cancelled'">{{app.status|titlecase}}</span></li>}</ul>} @else {<div class="p-8 text-center"><p class="text-stone-500 dark:text-stone-400">Você ainda não realizou nenhum agendamento.</p></div>}</div></div>
+      }
+       @case ('profile') {
+        <div class="animate-fade-in-down max-w-2xl mx-auto"><div class="bg-white/70 dark:bg-stone-900/70 p-6 md:p-8 rounded-lg border border-stone-200 dark:border-amber-500/10 shadow-lg">
+          <h2 class="text-xl font-semibold mb-6 text-amber-600 dark:text-amber-300">Editar Perfil</h2>
+          <div class="flex flex-col items-center space-y-4 mb-8">
+            <img [src]="profilePicture()" alt="Foto de Perfil" class="w-32 h-32 rounded-full object-cover border-4 border-amber-500/30"><label class="cursor-pointer bg-stone-200 hover:bg-stone-300 dark:bg-stone-700/80 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 font-bold py-2 px-4 rounded-lg transition-all transform hover:scale-105 active:scale-95"><span>Mudar Foto</span><input type="file" class="hidden" (change)="onFileSelected($event)" accept="image/*"></label>
+          </div>
+          <form (ngSubmit)="saveProfileChanges()" class="space-y-4">
+            <div><label class="block text-sm font-medium text-amber-600/80 dark:text-amber-400/80 mb-1">Nome</label><input type="text" [value]="editingProfileData().name || ''" (input)="handleProfileFormChange($event, 'name')" class="w-full bg-stone-100 dark:bg-stone-800/60 border border-stone-300 dark:border-stone-700 rounded-lg px-3 py-2 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500"></div>
+            <div><label class="block text-sm font-medium text-amber-600/80 dark:text-amber-400/80 mb-1">Email</label><input type="email" [value]="editingProfileData().email || ''" (input)="handleProfileFormChange($event, 'email')" class="w-full bg-stone-100 dark:bg-stone-800/60 border border-stone-300 dark:border-stone-700 rounded-lg px-3 py-2 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500"></div>
+            <div><label class="block text-sm font-medium text-amber-600/80 dark:text-amber-400/80 mb-1">Nova Senha</label><input type="password" placeholder="Deixe em branco para não alterar" (input)="handleProfileFormChange($event, 'newPassword')" class="w-full bg-stone-100 dark:bg-stone-800/60 border border-stone-300 dark:border-stone-700 rounded-lg px-3 py-2 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500"></div>
+            @if (editError()) {<div class="bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 text-red-800 dark:text-red-300 px-4 py-2 rounded-lg text-sm">{{ editError() }}</div>}
+            <div class="flex justify-end pt-4"><button type="submit" [disabled]="isSaving()" class="bg-amber-500 text-stone-900 font-bold py-2 px-6 rounded-lg hover:bg-amber-400 transition-all transform hover:scale-105 active:scale-95 disabled:bg-stone-300 dark:disabled:bg-stone-600 disabled:cursor-wait disabled:opacity-50">{{ isSaving() ? 'Salvando...' : 'Salvar Alterações' }}</button></div>
+          </form>
+        </div></div>
+      }
+    }
+  </main>
+</div>
