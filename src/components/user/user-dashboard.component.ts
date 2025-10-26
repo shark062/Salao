@@ -1,169 +1,202 @@
-import { Component, ChangeDetectionStrategy, signal, computed, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, inject, computed, signal } from '@angular/core';
+import { CommonModule, DatePipe, CurrencyPipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { DataService } from '../../services/data.service';
-import { LogService } from '../../services/log.service';
-import { QuestionnaireData, User } from '../../models';
+import { AppointmentDetails, User, Appointment, QuestionnaireData } from '../../models';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
-
-type UserSection = 'dashboard' | 'new-appointment' | 'history' | 'profile';
-type LaminaUnguealOption = 'descamacao' | 'descolamento' | 'manchas' | 'estrias';
 
 @Component({
   selector: 'app-user-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, ThemeToggleComponent],
+  imports: [CommonModule, DatePipe, CurrencyPipe, TitleCasePipe, ThemeToggleComponent, FormsModule],
   templateUrl: './user-dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UserDashboardComponent implements OnInit {
+export class UserDashboardComponent {
   authService = inject(AuthService);
   dataService = inject(DataService);
-  logService = inject(LogService);
 
-  currentUser = computed(() => this.authService.currentUser() as User);
-  activeSection = signal<UserSection>('dashboard');
+  // State
   isMenuOpen = signal(false);
+  activeSection = signal('dashboard');
   isSaving = signal(false);
 
-  // For new appointment
+  // Data Signals
+  currentUser = computed(() => this.authService.currentUser() as User | null);
   services = this.dataService.services;
+
+  // Booking Form Signals
   selectedServiceId = signal<number | null>(null);
   appointmentDate = signal('');
   appointmentTime = signal('');
   
-  // Profile editing
+  // Profile Editing
   editingProfileData = signal<Partial<User & { newPassword?: string }>>({});
-  profilePicture = computed(() => {
-    const editingUrl = this.editingProfileData().photoUrl;
-    if (editingUrl) return editingUrl;
-    const currentUrl = this.currentUser()?.photoUrl;
-    if (currentUrl) return currentUrl;
-    return `https://api.dicebear.com/8.x/initials/svg?seed=${this.currentUser()?.name}`;
-  });
-  editError = signal('');
+  profilePicture = signal(this.currentUser()?.photoUrl || '');
+  editError = signal<string | null>(null);
   
   // Questionnaire
-  yesNoQuestions: { key: keyof Omit<QuestionnaireData, 'laminaUngueal' | 'outros'>, label: string }[] = [
-    { key: 'gestacao', label: 'Está em período de gestação?' }, { key: 'roerUnhas', label: 'Tem o hábito de roer unhas?' },
-    { key: 'alergia', label: 'Possui algum tipo de alergia?' }, { key: 'retirarCuticula', label: 'Costuma retirar a cutícula?' },
-    { key: 'micose', label: 'Tem ou já teve micose?' }, { key: 'medicamento', label: 'Faz uso de algum medicamento?' },
-    { key: 'atividadeFisica', label: 'Pratica atividade física regularmente?' }, { key: 'piscinaPraia', label: 'Frequenta piscina ou praia?' },
-    { key: 'diabetes', label: 'Tem diabetes?' }, { key: 'unhaEncravada', label: 'Tem unhas encravadas?' },
+  questionnaire = signal<QuestionnaireData>({
+    gestacao: null, roerUnhas: null, alergia: null, retirarCuticula: null, micose: null,
+    medicamento: null, atividadeFisica: null, piscinaPraia: null, diabetes: null,
+    unhaEncravada: null, laminaUngueal: [], outros: ''
+  });
+  
+  readonly yesNoQuestions: { key: keyof QuestionnaireData; label: string }[] = [
+      { key: 'gestacao', label: 'Está em período de gestação?' },
+      { key: 'roerUnhas', label: 'Tem o hábito de roer as unhas?' },
+      { key: 'alergia', label: 'Possui alergia a algum produto?' },
+      { key: 'retirarCuticula', label: 'Gosta de retirar toda a cutícula?' },
+      { key: 'micose', label: 'Possui algum tipo de micose?' },
+      { key: 'medicamento', label: 'Faz uso de algum medicamento?' },
+      { key: 'atividadeFisica', label: 'Pratica atividade física regularmente?' },
+      { key: 'piscinaPraia', label: 'Frequenta piscina ou praia com frequência?' },
+      { key: 'diabetes', label: 'É portadora de diabetes?' },
+      { key: 'unhaEncravada', label: 'Possui unhas encravadas?' },
   ];
+  readonly laminaUnguealOptions: ('descamacao' | 'descolamento' | 'manchas' | 'estrias')[] = ['descamacao', 'descolamento', 'manchas', 'estrias'];
 
-  laminaUnguealOptions: LaminaUnguealOption[] = ['descamacao', 'descolamento', 'manchas', 'estrias'];
-  private initialQuestionnaireState: QuestionnaireData = { gestacao: 'nao', roerUnhas: 'nao', alergia: 'nao', retirarCuticula: 'nao', micose: 'nao', medicamento: 'nao', atividadeFisica: 'nao', piscinaPraia: 'nao', diabetes: 'nao', unhaEncravada: 'nao', laminaUngueal: [], outros: '' };
-  questionnaire = signal<QuestionnaireData>({ ...this.initialQuestionnaireState });
-
-  userAppointments = computed(() => {
+  // Computed Data
+  upcomingAppointments = computed<AppointmentDetails[]>(() => {
     const user = this.currentUser();
     if (!user) return [];
-    return this.dataService.appointments().filter(app => app.userId === user.id).map(app => this.dataService.getAppointmentDetails(app)).sort((a, b) => new Date(b.date + 'T' + b.time).getTime() - new Date(a.date + 'T' + a.time).getTime());
+    const today = new Date().toISOString().split('T')[0];
+    return this.dataService.appointments()
+      .filter(a => a.userId === user.id && a.date >= today && a.status !== 'cancelled')
+      .map(this.mapAppointmentDetails.bind(this))
+      .sort((a, b) => new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime());
   });
 
-  upcomingAppointments = computed(() => {
-    const todayStr = new Date().toISOString().split('T')[0];
-    return this.userAppointments().filter(app => app.date >= todayStr && app.status === 'confirmed').sort((a, b) => new Date(a.date + 'T' + a.time).getTime() - new Date(b.date + 'T' + b.time).getTime());
+  userAppointments = computed<AppointmentDetails[]>(() => {
+    const user = this.currentUser();
+    if (!user) return [];
+    return this.dataService.appointments()
+      .filter(a => a.userId === user.id)
+      .map(this.mapAppointmentDetails.bind(this))
+      .sort((a, b) => new Date(`${b.date}T${b.time}`).getTime() - new Date(`${a.date}T${a.time}`).getTime());
   });
   
-  ngOnInit() {
-    this.editingProfileData.set({ ...this.currentUser() });
+  private mapAppointmentDetails(a: Appointment) {
+    const service = this.services().find(s => s.id === a.serviceId);
+    return {
+      ...a,
+      userName: this.currentUser()?.name || 'N/A',
+      serviceName: service?.name || 'N/A',
+      price: service?.price || 0,
+      emoji: service?.emoji || '❓',
+    };
   }
 
-  selectSection(section: UserSection) {
-    this.activeSection.set(section);
-    if (section === 'new-appointment') this.resetBookingForm();
-    if (section === 'profile') this.resetProfileForm();
-    this.isMenuOpen.set(false);
-  }
-
+  // Methods
   toggleMenu() { this.isMenuOpen.update(v => !v); }
-  
-  updateQuestionnaireField(field: keyof QuestionnaireData, value: any) { this.questionnaire.update(q => ({ ...q, [field]: value })); }
-
-  isLaminaUnguealSelected(option: LaminaUnguealOption): boolean { return this.questionnaire().laminaUngueal.includes(option); }
-
-  onLaminaUnguealChange(event: Event) {
-    const target = event.target as HTMLInputElement;
-    const value = target.value as LaminaUnguealOption;
-    this.questionnaire.update(q => {
-      const currentValues = q.laminaUngueal;
-      if (target.checked) return { ...q, laminaUngueal: [...currentValues, value] };
-      return { ...q, laminaUngueal: currentValues.filter(v => v !== value) };
-    });
+  logout() { this.authService.logout(); }
+  selectSection(section: string) {
+    this.activeSection.set(section);
+    this.isMenuOpen.set(false);
+    if(section === 'profile') {
+      this.editingProfileData.set({ ...this.currentUser() });
+      this.profilePicture.set(this.currentUser()?.photoUrl || `https://api.dicebear.com/8.x/initials/svg?seed=${this.currentUser()?.name}`);
+    }
   }
 
-  onOutrosInputChange(event: Event) { this.updateQuestionnaireField('outros', (event.target as HTMLTextAreaElement).value); }
-
+  // Booking
   bookAppointment() {
     const user = this.currentUser();
-    if (!user || !this.selectedServiceId() || !this.appointmentDate() || !this.appointmentTime() || this.isSaving()) return;
-
+    if (!user || !this.selectedServiceId() || !this.appointmentDate() || !this.appointmentTime()) return;
+    
     this.isSaving.set(true);
-    setTimeout(() => {
-      try {
-        const appointmentData = { userId: user.id, serviceId: this.selectedServiceId()!, date: this.appointmentDate(), time: this.appointmentTime(), questionnaire: this.questionnaire() };
-        this.dataService.addAppointment(appointmentData);
-        this.logService.log('Appointment Booked', { userId: user.id, serviceId: this.selectedServiceId() });
-        alert('Agendamento confirmado com sucesso!');
-        this.selectSection('dashboard');
-      } finally {
-        this.isSaving.set(false);
+    
+    const newAppt: Omit<Appointment, 'id'> = {
+      userId: user.id,
+      serviceId: this.selectedServiceId()!,
+      date: this.appointmentDate(),
+      time: this.appointmentTime(),
+      status: 'pending',
+      questionnaire: this.questionnaire()
+    };
+    
+    setTimeout(() => { // Simulate async operation
+      this.dataService.addAppointment(newAppt);
+      this.isSaving.set(false);
+      this.resetBookingForm();
+      this.selectSection('dashboard');
+    }, 1000);
+  }
+
+  resetBookingForm() {
+    this.selectedServiceId.set(null);
+    this.appointmentDate.set('');
+    this.appointmentTime.set('');
+    this.questionnaire.set({
+        gestacao: null, roerUnhas: null, alergia: null, retirarCuticula: null, micose: null,
+        medicamento: null, atividadeFisica: null, piscinaPraia: null, diabetes: null,
+        unhaEncravada: null, laminaUngueal: [], outros: ''
+    });
+  }
+  
+  // Questionnaire Handlers
+  updateQuestionnaireField(key: keyof QuestionnaireData, value: any) {
+    this.questionnaire.update(q => ({ ...q, [key]: value }));
+  }
+
+  isLaminaUnguealSelected(option: string): boolean {
+    return this.questionnaire().laminaUngueal.includes(option as any);
+  }
+
+  onLaminaUnguealChange(event: Event) {
+    const checkbox = event.target as HTMLInputElement;
+    const option = checkbox.value as 'descamacao' | 'descolamento' | 'manchas' | 'estrias';
+    this.questionnaire.update(q => {
+      const currentSelection = q.laminaUngueal;
+      if (checkbox.checked) {
+        return { ...q, laminaUngueal: [...currentSelection, option] };
+      } else {
+        return { ...q, laminaUngueal: currentSelection.filter(item => item !== option) };
       }
-    }, 500);
+    });
+  }
+  
+  onOutrosInputChange(event: Event) {
+    const value = (event.target as HTMLTextAreaElement).value;
+    this.updateQuestionnaireField('outros', value);
   }
 
-  private resetBookingForm() {
-    this.selectedServiceId.set(null); this.appointmentDate.set(''); this.appointmentTime.set('');
-    this.questionnaire.set({ ...this.initialQuestionnaireState });
-  }
-
-  // Profile Methods
-  handleProfileFormChange(event: Event, field: keyof User | 'newPassword') {
+  // Profile
+  handleProfileFormChange(event: Event, field: 'name' | 'email' | 'newPassword') {
     const value = (event.target as HTMLInputElement).value;
-    this.editingProfileData.update(d => ({ ...d, [field]: value }));
+    this.editingProfileData.update(data => ({ ...data, [field]: value }));
   }
 
-  onFileSelected(event: Event) {
+  onFileSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => this.editingProfileData.update(d => ({ ...d, photoUrl: e.target?.result as string }));
+      reader.onload = (e) => this.profilePicture.set(e.target?.result as string);
       reader.readAsDataURL(file);
     }
   }
 
   saveProfileChanges() {
-    if (this.isSaving()) return;
-    const updatedData = this.editingProfileData();
-    if (updatedData.newPassword && updatedData.newPassword.length < 3) {
-      this.editError.set('A nova senha é muito curta.'); return;
-    }
     this.isSaving.set(true);
-    setTimeout(() => {
-        try {
-            const userToSave: User = {
-                id: this.currentUser().id, name: updatedData.name || this.currentUser().name,
-                email: updatedData.email || this.currentUser().email, isLoyal: this.currentUser().isLoyal,
-                birthday: this.currentUser().birthday, photoUrl: updatedData.photoUrl || this.currentUser().photoUrl,
-            };
-            this.dataService.updateUser(userToSave);
-            this.authService.currentUser.set(userToSave);
-            this.logService.log('Profile Updated', { userId: userToSave.id });
-            alert('Perfil atualizado com sucesso!');
-            this.editError.set('');
-        } finally {
-            this.isSaving.set(false);
-        }
-    }, 500);
-  }
+    this.editError.set(null);
+    
+    // Simple validation
+    if (!this.editingProfileData().name || !this.editingProfileData().email) {
+      this.editError.set('Nome e Email são obrigatórios.');
+      this.isSaving.set(false);
+      return;
+    }
+    
+    setTimeout(() => { // Simulate async operation
+        const updatedData = { ...this.currentUser(), ...this.editingProfileData(), photoUrl: this.profilePicture() } as User;
+        delete (updatedData as any).newPassword;
 
-  private resetProfileForm() {
-    this.editingProfileData.set({ ...this.currentUser() });
-    this.editError.set('');
+        this.dataService.updateUser(updatedData);
+        this.authService.currentUser.set(updatedData); // Update current user in auth service
+        
+        this.isSaving.set(false);
+        this.selectSection('dashboard');
+    }, 1000);
   }
-
-  logout() { this.authService.logout(); }
 }

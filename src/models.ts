@@ -2,7 +2,6 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  isLoyal: boolean;
   birthday: string; // YYYY-MM-DD
   photoUrl?: string;
 }
@@ -41,6 +40,15 @@ export interface Appointment {
   time: string; // HH:mm
   status: 'confirmed' | 'pending' | 'cancelled';
   questionnaire?: QuestionnaireData;
+}
+
+export interface Feedback {
+  id: number;
+  rating: number; // 1-5
+  comment: string;
+  date: string; // YYYY-MM-DD
+  userName?: string; // Optional, for non-anonymous feedback
+  userId?: number;
 }
 
 export interface Expense {

@@ -1,150 +1,109 @@
 import { Injectable, signal } from '@angular/core';
-import { User, Service, Appointment, Expense, AppointmentDetails, QuestionnaireData, Revenue } from '../models';
+import { User, Service, Appointment, Feedback, Expense, Revenue } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class DataService {
+  // Mock data signals
   users = signal<User[]>([
-    { id: 1, name: 'Ana Clara', email: 'ana.clara@email.com', isLoyal: true, birthday: '1995-08-15', photoUrl: 'https://picsum.photos/id/1027/200/200' },
-    { id: 2, name: 'Beatriz Costa', email: 'beatriz.costa@email.com', isLoyal: false, birthday: '2000-03-22' },
-    { id: 3, name: 'Carla Dias', email: 'carla.dias@email.com', isLoyal: true, birthday: '1998-11-05' },
+    { id: 1, name: 'Alice Silva', email: 'alice.silva@example.com', birthday: '1990-05-15', photoUrl: 'https://picsum.photos/id/1027/200/200' },
+    { id: 2, name: 'Bruno Costa', email: 'bruno.costa@example.com', birthday: '1988-11-20' },
+    { id: 3, name: 'Carla Dias', email: 'carla.dias@example.com', birthday: '1995-02-10', photoUrl: 'https://picsum.photos/id/1028/200/200' }
   ]);
 
   services = signal<Service[]>([
-    { id: 1, name: 'Manicure Essencial', description: 'Cutilagem, lixamento e esmaltação com cores nacionais.', price: 30, duration: 45, category: 'Mãos', emoji: '💅' },
-    { id: 2, name: 'Pedicure Relax', description: 'Tratamento completo para os pés com esfoliação e massagem.', price: 40, duration: 60, category: 'Pés', emoji: '👣' },
-    { id: 3, name: 'Unha de Gel', description: 'Aplicação de unhas de gel com aspecto natural e alta durabilidade.', price: 120, duration: 120, category: 'Alongamento', emoji: '💎' },
-    { id: 4, name: 'Spa das Mãos', description: 'Hidratação profunda, esfoliação e tratamento para cutículas.', price: 50, duration: 60, category: 'Tratamento', emoji: '✨' },
-    { id: 5, name: 'Esmaltação em Gel', description: 'Esmalte de longa duração com secagem imediata e brilho intenso.', price: 60, duration: 75, category: 'Mãos', emoji: '💖' },
-    { id: 6, name: 'Manutenção Gel', description: 'Manutenção das unhas de gel para garantir a durabilidade.', price: 80, duration: 90, category: 'Alongamento', emoji: '🔧' },
+    { id: 1, name: 'Manicure Tradicional', description: 'Cutilagem e esmaltação tradicional.', price: 30, duration: 45, category: 'Mãos', emoji: '💅' },
+    { id: 2, name: 'Pedicure Tradicional', description: 'Cutilagem e esmaltação tradicional.', price: 35, duration: 50, category: 'Pés', emoji: '👣' },
+    { id: 3, name: 'Alongamento em Fibra de Vidro', description: 'Aplicação de fibra de vidro para unhas mais longas e resistentes.', price: 180, duration: 150, category: 'Alongamento', emoji: '✨' },
+    { id: 4, name: 'Esmaltação em Gel', description: 'Esmalte com secagem em cabine UV, maior durabilidade.', price: 70, duration: 60, category: 'Mãos', emoji: '💖' },
+    { id: 5, name: 'Spa dos Pés', description: 'Tratamento completo de hidratação e relaxamento para os pés.', price: 90, duration: 75, category: 'Pés', emoji: '🛀' }
   ]);
 
   appointments = signal<Appointment[]>([
     { id: 1, userId: 1, serviceId: 1, date: '2024-07-28', time: '10:00', status: 'confirmed' },
-    { id: 2, userId: 2, serviceId: 3, date: '2024-07-29', time: '14:00', status: 'confirmed' },
-    { id: 3, userId: 1, serviceId: 2, date: new Date().toISOString().split('T')[0], time: '11:00', status: 'confirmed' },
+    { id: 2, userId: 2, serviceId: 3, date: '2024-07-29', time: '14:00', status: 'pending' },
+    { id: 3, userId: 1, serviceId: 4, date: '2024-08-05', time: '11:30', status: 'confirmed' },
+    { id: 4, userId: 3, serviceId: 2, date: '2024-08-05', time: '16:00', status: 'cancelled' },
+  ]);
+
+  feedback = signal<Feedback[]>([
+    { id: 1, rating: 5, comment: 'Serviço impecável, como sempre!', date: '2024-07-28', userName: 'Alice Silva', userId: 1 },
+    { id: 2, rating: 4, comment: 'Gostei muito do resultado, mas a cor não era exatamente o que eu esperava.', date: '2024-07-20' },
   ]);
 
   expenses = signal<Expense[]>([
-    { id: 1, item: 'Aluguel do Espaço', category: 'rent', amount: 1500, date: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01` },
-    { id: 2, item: 'Esmaltes e Acetona', category: 'supplies', amount: 350, date: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-05` },
-    { id: 3, item: 'Energia Elétrica', category: 'utilities', amount: 250, date: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-10` },
+    { id: 1, item: 'Esmaltes (lote)', category: 'supplies', amount: 250.00, date: '2024-07-01' },
+    { id: 2, item: 'Aluguel do espaço', category: 'rent', amount: 1500.00, date: '2024-07-05' },
+    { id: 3, item: 'Conta de luz', category: 'utilities', amount: 180.50, date: '2024-07-10' },
   ]);
-  
-  revenues = signal<Revenue[]>([]);
 
-  getAppointmentDetails(app: Appointment): AppointmentDetails {
-    const user = this.users().find(u => u.id === app.userId);
-    const service = this.services().find(s => s.id === app.serviceId);
-    return {
-      ...app,
-      userName: user?.name || 'Desconhecido',
-      serviceName: service?.name || 'Desconhecido',
-      price: service?.price || 0,
-      emoji: service?.emoji || '❔',
-    };
+  revenues = signal<Revenue[]>([
+    { id: 1, item: 'Venda de creme para mãos', category: 'product_sale', amount: 45.00, date: '2024-07-15' },
+    { id: 2, item: 'Curso de Manicure Básico', category: 'course', amount: 800.00, date: '2024-07-20' },
+  ]);
+
+  // Methods to interact with data
+  addAppointment(appointment: Omit<Appointment, 'id'>) {
+    this.appointments.update(appointments => [
+      ...appointments,
+      { ...appointment, id: Math.max(...appointments.map(a => a.id), 0) + 1 }
+    ]);
+  }
+
+  updateAppointmentStatus(appointmentId: number, status: 'confirmed' | 'pending' | 'cancelled') {
+    this.appointments.update(appointments => appointments.map(appt => 
+        appt.id === appointmentId ? { ...appt, status } : appt
+    ));
+  }
+
+  addUser(user: Omit<User, 'id'>) {
+    const newUser = { ...user, id: Math.max(...this.users().map(u => u.id), 0) + 1 };
+    this.users.update(users => [...users, newUser]);
+  }
+
+  updateUser(updatedUser: User) {
+    this.users.update(users => users.map(user => user.id === updatedUser.id ? updatedUser : user));
+  }
+
+  deleteUser(userId: number) {
+    this.users.update(users => users.filter(user => user.id !== userId));
+    this.appointments.update(appointments => appointments.filter(appt => appt.userId !== userId));
   }
   
-  addAppointment(data: { userId: number; serviceId: number; date: string; time: string; questionnaire: QuestionnaireData; }): void {
-    this.appointments.update(apps => {
-      const newId = Math.max(0, ...apps.map(a => a.id)) + 1;
-      const newAppointment: Appointment = {
-        id: newId,
-        status: 'confirmed',
-        userId: data.userId,
-        serviceId: data.serviceId,
-        date: data.date,
-        time: data.time,
-        questionnaire: data.questionnaire
-      };
-      return [...apps, newAppointment];
-    });
+  addService(service: Omit<Service, 'id'>) {
+    const newService = { ...service, id: Math.max(...this.services().map(s => s.id), 0) + 1 };
+    this.services.update(services => [...services, newService]);
   }
 
-  addService(serviceData: Omit<Service, 'id'>): void {
-    this.services.update(services => {
-      const newId = Math.max(0, ...services.map(s => s.id)) + 1;
-      const newService: Service = { id: newId, ...serviceData };
-      return [...services, newService];
-    });
+  updateService(updatedService: Service) {
+    this.services.update(services => services.map(s => s.id === updatedService.id ? updatedService : s));
   }
 
-  deleteService(serviceId: number): void {
-    this.services.update(services => services.filter(s => s.id !== serviceId));
+  deleteService(serviceId: number) {
+    this.services.update(services => services.filter(service => service.id !== serviceId));
   }
 
-  updateService(updatedService: Service): void {
-    this.services.update(services => 
-      services.map(s => s.id === updatedService.id ? updatedService : s)
-    );
+  addExpense(expense: Omit<Expense, 'id'>) {
+    const newExpense = { ...expense, id: Math.max(...this.expenses().map(e => e.id), 0) + 1 };
+    this.expenses.update(expenses => [...expenses, newExpense]);
   }
 
-  updateAppointment(updatedAppointment: Appointment): void {
-    this.appointments.update(apps => 
-      apps.map(a => a.id === updatedAppointment.id ? updatedAppointment : a)
-    );
+  deleteExpense(expenseId: number) {
+    this.expenses.update(expenses => expenses.filter(e => e.id !== expenseId));
   }
 
-  updateUser(updatedUser: User): void {
-    this.users.update(users => 
-      users.map(u => u.id === updatedUser.id ? updatedUser : u)
-    );
+  addRevenue(revenue: Omit<Revenue, 'id'>) {
+    const newRevenue = { ...revenue, id: Math.max(...this.revenues().map(r => r.id), 0) + 1 };
+    this.revenues.update(revenues => [...revenues, newRevenue]);
   }
 
-  addExpense(expenseData: Omit<Expense, 'id'>): void {
-    this.expenses.update(expenses => {
-      const newId = Math.max(0, ...expenses.map(e => e.id)) + 1;
-      const newExpense: Expense = { id: newId, ...expenseData };
-      return [...expenses, newExpense];
-    });
-  }
-
-  addRevenue(revenueData: Omit<Revenue, 'id'>): void {
-    this.revenues.update(revenues => {
-      const newId = Math.max(0, ...revenues.map(r => r.id)) + 1;
-      const newRevenue: Revenue = { id: newId, ...revenueData };
-      return [...revenues, newRevenue];
-    });
-  }
-
-  getRevenueForMonth(year: number, month: number): number {
-    const appointmentRevenue = this.appointments().reduce((total, app) => {
-      const appDate = new Date(app.date);
-      if (appDate.getFullYear() === year && appDate.getMonth() + 1 === month && app.status === 'confirmed') {
-        const service = this.services().find(s => s.id === app.serviceId);
-        return total + (service?.price || 0);
-      }
-      return total;
-    }, 0);
-
-    const manualRevenue = this.revenues().reduce((total, rev) => {
-      const [revYear, revMonth] = rev.date.split('-').map(Number);
-      if (revYear === year && revMonth === month) {
-        return total + rev.amount;
-      }
-      return total;
-    }, 0);
-
-    return appointmentRevenue + manualRevenue;
-  }
-
-  getExpensesForMonth(year: number, month: number): number {
-    return this.expenses().reduce((total, exp) => {
-      const [expYear, expMonth] = exp.date.split('-').map(Number);
-      if (expYear === year && expMonth === month) {
-        return total + exp.amount;
-      }
-      return total;
-    }, 0);
+  deleteRevenue(revenueId: number) {
+    this.revenues.update(revenues => revenues.filter(r => r.id !== revenueId));
   }
   
-  getRevenueForYear(year: number): number {
-    return this.appointments().reduce((total, app) => {
-      const appDate = new Date(app.date);
-      if (appDate.getFullYear() === year && app.status === 'confirmed') {
-        const service = this.services().find(s => s.id === app.serviceId);
-        return total + (service?.price || 0);
-      }
-      return total;
-    }, 0);
+  addFeedback(feedback: Omit<Feedback, 'id'>) {
+    this.feedback.update(feedbacks => [
+        ...feedbacks,
+        { ...feedback, id: Math.max(...feedbacks.map(f => f.id), 0) + 1 }
+    ]);
   }
 }

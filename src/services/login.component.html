@@ -5,14 +5,14 @@
   <div class="w-full max-w-md">
 
     <div class="text-center mb-8">
-      <h1 class="text-4xl font-bold text-amber-600 dark:text-amber-400 font-serif [text-shadow:2px_2px_4px_rgba(0,0,0,0.5)]">ERIDES SOUZA ESTÚDIO</h1>
-      <p class="text-stone-600 dark:text-stone-300">Sistema de Agendamento Online</p>
+      <h1 class="text-4xl font-bold text-indigo-600 dark:text-indigo-400 font-sans tracking-tight">ERIDES SOUZA ESTÚDIO</h1>
+      <p class="text-slate-500 dark:text-slate-400">Sistema de Agendamento Online</p>
     </div>
 
-    <div class="bg-white/60 dark:bg-stone-900/50 backdrop-blur-lg border border-stone-300 dark:border-amber-500/20 rounded-2xl p-8 shadow-2xl shadow-stone-300/30 dark:shadow-black/30">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 shadow-lg dark:shadow-2xl dark:shadow-black/50">
       <form (ngSubmit)="onLogin()" class="space-y-6">
         <div>
-          <label for="username" class="block text-sm font-medium text-amber-600/80 dark:text-amber-400/80">Usuário</label>
+          <label for="username" class="block text-sm font-medium text-indigo-600 dark:text-indigo-400">Usuário</label>
           <div class="mt-1">
             <input 
               id="username" 
@@ -21,13 +21,13 @@
               required 
               [ngModel]="username()"
               (ngModelChange)="username.set($event)"
-              class="w-full bg-stone-100/60 dark:bg-stone-800/60 border border-stone-300 dark:border-stone-700 rounded-lg px-3 py-2 text-stone-900 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition"
+              class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
             />
           </div>
         </div>
 
         <div>
-          <label for="password" class="block text-sm font-medium text-amber-600/80 dark:text-amber-400/80">Senha</label>
+          <label for="password" class="block text-sm font-medium text-indigo-600 dark:text-indigo-400">Senha</label>
           <div class="mt-1">
             <input 
               id="password" 
@@ -36,7 +36,7 @@
               required
               [ngModel]="password()"
               (ngModelChange)="password.set($event)"
-              class="w-full bg-stone-100/60 dark:bg-stone-800/60 border border-stone-300 dark:border-stone-700 rounded-lg px-3 py-2 text-stone-900 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition"
+              class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
             />
           </div>
         </div>
@@ -48,7 +48,7 @@
         }
 
         <div>
-          <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-lg shadow-black/30 text-sm font-bold text-stone-900 bg-gradient-to-br from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-stone-100 dark:focus:ring-offset-stone-900 focus:ring-amber-500 transition-all duration-200 ease-in-out hover:scale-105 active:scale-100 hover:shadow-amber-500/20">
+          <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-100 dark:focus:ring-offset-slate-900 focus:ring-indigo-500 transition-all duration-200 ease-in-out hover:scale-105 active:scale-100">
             Entrar
           </button>
         </div>
@@ -57,22 +57,35 @@
 
     <!-- Satisfaction Survey -->
     <div class="mt-10 text-center">
-      <h3 class="text-stone-700 dark:text-stone-300 mb-4">Como você avalia sua última visita?</h3>
+      <h3 class="text-slate-700 dark:text-slate-300 mb-4">Como você avalia sua última visita?</h3>
       <div class="flex justify-center space-x-2 text-3xl cursor-pointer">
         @for (star of [1, 2, 3, 4, 5]; track star) {
           <span 
             (click)="setSatisfaction(star)" 
             class="transition-all duration-200 hover:scale-125"
-            [class.text-amber-400]="satisfaction() >= star"
-            [class.text-stone-300]="satisfaction() < star"
-            [class.dark:text-stone-600]="satisfaction() < star"
+            [class.text-indigo-400]="satisfaction() >= star"
+            [class.text-slate-300]="satisfaction() < star"
+            [class.dark:text-slate-600]="satisfaction() < star"
             [class.scale-125]="satisfaction() === star"
             >★</span
           >
         }
       </div>
+       @if(satisfaction() > 0 && !showSatisfaction()) {
+        <div class="mt-4 space-y-3 animate-fade-in-down">
+          <textarea 
+            [ngModel]="comment()"
+            (ngModelChange)="comment.set($event)"
+            rows="3" 
+            placeholder="Deixe um comentário (opcional)..." 
+            class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"></textarea>
+          <button (click)="submitFeedback()" class="w-full py-2 px-4 rounded-lg shadow-md text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition">
+            Enviar Avaliação
+          </button>
+        </div>
+      }
        @if(showSatisfaction()) {
-        <p class="mt-4 text-green-700 dark:text-amber-300 bg-green-100 dark:bg-green-900/40 py-2 px-4 rounded-lg animate-pulse">
+        <p class="mt-4 text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/40 py-2 px-4 rounded-lg animate-pulse">
             Obrigado pelo seu feedback!
         </p>
        }
