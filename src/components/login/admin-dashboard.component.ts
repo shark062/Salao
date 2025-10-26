@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { DataService } from '../../services/data.service';
 import { Appointment, AppointmentDetails, User, Service, Expense, Revenue } from '../../models';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
+import { ExportService } from '../../services/export.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -16,6 +17,7 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 export class AdminDashboardComponent {
   authService = inject(AuthService);
   dataService = inject(DataService);
+  exportService = inject(ExportService);
   currentUser = this.authService.currentUser;
 
   // State
@@ -99,6 +101,34 @@ export class AdminDashboardComponent {
       c.name.toLowerCase().includes(term) || c.email.toLowerCase().includes(term)
     );
   });
+  
+  // Financial Chart Data
+  expensesByCategory = computed(() => {
+    const categories = this.expenses().reduce((acc, expense) => {
+      const key = expense.category;
+      if (!acc[key]) acc[key] = 0;
+      // FIX: Ensure amount is treated as a number to prevent type errors in sort and incorrect calculations.
+      acc[key] += Number(expense.amount) || 0;
+      return acc;
+    }, {} as { [key: string]: number });
+    return Object.entries(categories).map(([name, amount]) => ({ name, amount })).sort((a,b) => b.amount - a.amount);
+  });
+
+  maxExpense = computed(() => Math.max(...this.expensesByCategory().map(c => c.amount), 0));
+
+  revenuesByCategory = computed(() => {
+    const categories = this.revenues().reduce((acc, revenue) => {
+      const key = revenue.category;
+      if (!acc[key]) acc[key] = 0;
+      // FIX: Ensure amount is treated as a number to prevent type errors in sort and incorrect calculations.
+      acc[key] += Number(revenue.amount) || 0;
+      return acc;
+    }, {} as { [key: string]: number });
+    return Object.entries(categories).map(([name, amount]) => ({ name, amount })).sort((a,b) => b.amount - a.amount);
+  });
+
+  maxRevenue = computed(() => Math.max(...this.revenuesByCategory().map(c => c.amount), 0));
+
 
   // Methods
   toggleMenu() { this.isMenuOpen.update(v => !v); }
@@ -192,5 +222,24 @@ export class AdminDashboardComponent {
   updateAppointmentStatus(id: number, event: Event) {
     const status = (event.target as HTMLSelectElement).value as 'confirmed' | 'pending' | 'cancelled';
     this.dataService.updateAppointmentStatus(id, status);
+  }
+
+  // Export
+  exportFinancials() {
+    const dataToExport = [
+        ...this.revenues().map(r => ({ tipo: 'Receita', item: r.item, categoria: r.category, valor: r.amount, data: r.date })),
+        ...this.expenses().map(e => ({ tipo: 'Despesa', item: e.item, categoria: e.category, valor: e.amount, data: e.date })),
+    ];
+    this.exportService.exportToCsv(dataToExport, `financeiro-${new Date().toISOString().split('T')[0]}.csv`);
+  }
+
+  exportClients() {
+    const dataToExport = this.clientsWithAppointmentCount().map(c => ({
+        nome: c.name,
+        email: c.email,
+        aniversario: c.birthday,
+        agendamentos_confirmados: c.appointmentCount
+    }));
+    this.exportService.exportToCsv(dataToExport, `clientes-${new Date().toISOString().split('T')[0]}.csv`);
   }
 }
